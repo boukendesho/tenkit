@@ -41,7 +41,7 @@ jobs:
           - os: ubuntu-latest
             c_compiler: cl
 
-    # steps:
+    steps:
     # - name: Install Latest Compilers (Linux)
     #   if: runner.os == 'Linux'
     #   run: |

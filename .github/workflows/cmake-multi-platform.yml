@@ -50,9 +50,7 @@ jobs:
       run: |
         sudo apt-get update
         if [[ "${{ matrix.cpp_compiler }}" == "g++-14" ]]; then
-          sudo apt-get install -y g++-14
-        else
-          sudo apt-get install -y clang-20
+          sudo apt-get install -y g++-14 clang-20
         fi
 
     - uses: actions/checkout@v4
@@ -90,3 +88,11 @@ jobs:
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: tenkit-${{ matrix.os }}-${{ matrix.c_compiler }}
+        path: |
+          ${{ steps.strings.outputs.build-output-dir }}/Release/tenkit.exe
+          ${{ steps.strings.outputs.build-output-dir }}/tenkit

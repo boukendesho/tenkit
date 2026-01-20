@@ -2,7 +2,6 @@
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
 #include <optional>
 #include <print>
 #include <string>
@@ -33,10 +32,10 @@ inline std::optional<Settings> loadSettings() {
     // std::println(stderr, "Setting file not found.");
     return std::nullopt;
   } else {
-    std::ifstream f(path.string());
+    std::ifstream in(path);
 
     try {
-      settings_data = nlohmann::json::parse(f);
+      settings_data = nlohmann::json::parse(in);
     } catch (const nlohmann::json::parse_error &e) {
       std::println(stderr, "JSONパースエラー: {}", e.what());
       return std::nullopt;

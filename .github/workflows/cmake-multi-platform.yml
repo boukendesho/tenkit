@@ -50,8 +50,8 @@ jobs:
     - name: Setup vcpkg
       # This sets the VCPKG_ROOT environment variable which your preset needs
       uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgGitCommitId: 'latest' # Or a specific commit for reproducibility
+      # with:
+      #   vcpkgGitCommitId: 'latest' # Or a specific commit for reproducibility
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.

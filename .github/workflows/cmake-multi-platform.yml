@@ -31,11 +31,11 @@ jobs:
             c_compiler: cl
             cpp_compiler: cl
           - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
+            c_compiler: gcc-14
+            cpp_compiler: g++-14
           - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
+            c_compiler: clang-20
+            cpp_compiler: clang++-20
         exclude:
           - os: windows-latest
             c_compiler: gcc
@@ -45,6 +45,16 @@ jobs:
             c_compiler: cl
 
     steps:
+    - name: Install Latest Compilers (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        if [[ "${{ matrix.cpp_compiler }}" == "g++-14" ]]; then
+          sudo apt-get install -y g++-14
+        else
+          sudo apt-get install -y clang-20
+        fi
+
     - uses: actions/checkout@v4
 
     - name: Setup vcpkg

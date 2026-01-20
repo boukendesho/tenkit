@@ -1,5 +1,4 @@
 #pragma once
-#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -63,8 +62,8 @@ inline bool saveSettings(const std::string &city) {
 
   std::filesystem::create_directories(dir);
 
-  std::FILE *file = std::fopen(path.c_str(), "w");
-  if (!file) {
+  std::ofstream out(path);
+  if (!out) {
     int err = errno;
 
     std::error_code ec(err, std::generic_category());
@@ -75,8 +74,7 @@ inline bool saveSettings(const std::string &city) {
   } else {
     nlohmann::json settings_in_json = s;
     std::string settings_in_string = settings_in_json.dump(4);
-    std::print(file, "{}", settings_in_string);
-    std::fclose(file);
+    std::print(out, "{}", settings_in_string);
     return true;
   }
 }

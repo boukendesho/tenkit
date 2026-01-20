@@ -138,6 +138,7 @@ const std::map<std::string, std::string> city_code_by_en = {
 
 /**
  * @brief ユーザーの入力に日本語文字が含まれているかどうかを確認する。
+ * TODO: 全角スペースのtrim
  */
 inline bool isJapanese(const std::string &input) {
   return std::any_of(input.begin(), input.end(),
@@ -148,13 +149,13 @@ inline bool isJapanese(const std::string &input) {
  * @brief 正しいmapを自動的に選択し、地域コードを返す。
  * 見つからない場合はunexpected(エラーメッセージ)を返す。
  */
-using cityResult = std::expected<std::string, std::string>;
-inline cityResult getCityCode(const std::string &input) {
+inline std::expected<std::string, std::string>
+getCityCode(const std::string &input) {
   if (isJapanese(input)) {
     if (auto it = city_code_by_jp.find(input); it != city_code_by_jp.end()) {
       return it->second;
     }
-    return std::unexpected(input + " は見つかりませんでした");
+    return std::unexpected(input + " は有効な地域名ではありません。");
   } else {
     std::string lower_input = input;
     std::transform(lower_input.begin(), lower_input.end(), lower_input.begin(),
@@ -164,6 +165,25 @@ inline cityResult getCityCode(const std::string &input) {
         it != city_code_by_en.end()) {
       return it->second;
     }
-    return std::unexpected(input + " は見つかりませんでした");
+    return std::unexpected(input + " は有効な地域名ではありません。");
+  }
+}
+
+/**
+ * @brief 入力が英語か日本語かに関わらず、対応する日本語の地域名を返す。
+ */
+inline std::string getCityNameJP(const std::string &input, const std::string& code) {
+  if (isJapanese(input)) {
+    return input;
+  } else {
+    // auto code_res = getCityCode(input);
+
+    // const std::string& code = *code_res;
+
+    for (const auto& [name, c] : city_code_by_jp) {
+        if (c == code) {
+            return name;
+        }
+    }
   }
 }

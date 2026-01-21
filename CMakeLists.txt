@@ -9,6 +9,8 @@ find_package(cpr CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
 
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 add_executable(tenkit src/main.cpp)
 
 target_link_libraries(tenkit PRIVATE cpr::cpr nlohmann_json::nlohmann_json CLI11::CLI11)

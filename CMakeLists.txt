@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.31)
 
 project(TenKit VERSION 0.1.0 LANGUAGES CXX)
 
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # set(CMAKE_CXX_COMPILER clang++)
 

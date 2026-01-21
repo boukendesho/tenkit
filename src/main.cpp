@@ -1,3 +1,7 @@
+#include <print>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include "AreaMap.hpp"
 #include "Display.hpp"
 #include "GeoIPDetect.hpp"
@@ -34,6 +38,11 @@ queryWeather(const std::string &city_input) {
 }
 
 int main(int argc, char **argv) {
+
+  #ifdef _WIN32
+    // コンソールで UTF-8 を使用するように
+    SetConsoleOutputCP(CP_UTF8);
+  #endif
 
   std::string city_input;
   std::string city_to_watch;

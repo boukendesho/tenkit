@@ -6,7 +6,7 @@
 #include <print>
 #include <ranges>
 
-inline void display(cpr::Response r, int display_type) {
+inline void display(const cpr::Response &r, const int &display_type) {
   auto data = nlohmann::json::parse(r.text).get<WeatherResponse>();
 
   std::println("{}", data.title);

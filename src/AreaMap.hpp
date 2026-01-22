@@ -172,7 +172,7 @@ getCityCode(const std::string &input) {
 /**
  * @brief 入力が英語か日本語かに関わらず、対応する日本語の地域名を返す。
  */
-inline std::string getCityNameJP(const std::string &input, const std::string& code) {
+inline std::string getCityNameJP(const std::string &input, const std::string &code) {
   if (isJapanese(input)) {
     return input;
   } else {
@@ -183,6 +183,8 @@ inline std::string getCityNameJP(const std::string &input, const std::string& co
     for (const auto& [name, c] : city_code_by_jp) {
         if (c == code) {
             return name;
+        } else {
+          throw std::runtime_error("変なことが発生してしまいました...");
         }
     }
   }

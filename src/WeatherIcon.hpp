@@ -17,14 +17,16 @@ const std::map<std::string, std::vector<std::string>> weather_icon = {
         "    (        ",
         "     `-’     ",
         "      •      ",
-        "             ",
+        "             "
     }},
     {"晴れ",{
+        "             ",
         "    \\   /   ",
         "     .-.     ",
         "  ― (   ) ―  ",
         "     `-’     ",
-        "    /   \\   "
+        "    /   \\   ",
+        "             "
     }},
     {"晴時々曇",{
         "             ",
@@ -33,7 +35,7 @@ const std::map<std::string, std::vector<std::string>> weather_icon = {
         "   \\_(   ). ",
         "   /(___(__) ",
         "             ",
-        "             ",
+        "             "
     }},
     {"曇り",{
         "             ",
@@ -42,7 +44,7 @@ const std::map<std::string, std::vector<std::string>> weather_icon = {
         "  .-(    ).  ",
         " (___.__)__) ",
         "             ",
-        "             ",
+        "             "
     }},
     {"雨",{
         "             ",
@@ -51,7 +53,7 @@ const std::map<std::string, std::vector<std::string>> weather_icon = {
         "   /(___(__) ",
         "     ' ' ' ' ",
         "    ' ' ' '  ",
-        "             ",
+        "             "
     }},
     // {"大雨", {
     //     "             ",
@@ -60,7 +62,7 @@ const std::map<std::string, std::vector<std::string>> weather_icon = {
     //     "   /(___(__) ",
     //     "   ‚'‚'‚'‚'  ",
     //     "   ‚'‚'‚'‚'  ",
-    //     "             ",
+    //     "             "
     // }},
     {"雪", {
         "             ",
@@ -69,7 +71,7 @@ const std::map<std::string, std::vector<std::string>> weather_icon = {
         "   (___(__)  ",
         "    *  *  *  ",
         "   *  *  *   ",
-        "             ",
+        "             "
     }},
     // {"大雪", {
     //     "             ",
@@ -78,7 +80,7 @@ const std::map<std::string, std::vector<std::string>> weather_icon = {
     //     "   (___(__)  ",
     //     "   * * * *   ",
     //     "  * * * *    ",
-    //     "             ",
+    //     "             "
     // }},
     {"雷雨", {
         "             ",
@@ -87,7 +89,7 @@ const std::map<std::string, std::vector<std::string>> weather_icon = {
         "   (___(__)  ",
         "   ⚡\"\"⚡\"\"",
         "  ‚'‚'‚'‚'   ",
-        "             ",
+        "             "
     }},
     {"霧", {
         "             ",
@@ -96,7 +98,7 @@ const std::map<std::string, std::vector<std::string>> weather_icon = {
         "  _ - _ - _  ",
         " _ - _ - _ - ",
         "             ",
-        "             ",
+        "             "
     }}
 };
 /**

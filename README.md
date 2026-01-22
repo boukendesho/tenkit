@@ -9,8 +9,8 @@
 
 ## usage
 ```
-$ ./weatherapp -h
-usage: ./weatherpp [option(s)] [LOCATION]
+$ ./tenkit -h
+
 天気予報情報が取得できるシンプルなツール 
 
 

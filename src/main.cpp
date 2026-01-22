@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
 
       auto resp = queryWeather(city_input);
       if (!resp) {
-        std::println("{}", resp.error());
+        std::println("すみません... {} は天気APIに対応していないです。", city_input);
         return 1;
       }
 

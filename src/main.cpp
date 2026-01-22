@@ -15,9 +15,9 @@
 
 // C++23の新機能 expected を使ってみた
 std::expected<cpr::Response, std::string>
-queryWeather(const std::string &city_input) {
+queryWeather(const std::string &city) {
 
-  auto result = getCityCode(city_input);
+  auto result = getCityCode(city);
 
   if (!result) {
     return std::unexpected(std::format("エラー: {}", result.error()));
@@ -29,22 +29,20 @@ queryWeather(const std::string &city_input) {
     if (r.status_code == 200) {
       return r;
     } else {
-      return std::unexpected(std::format("APIエラー: code {}, 地名: {}",
-                                         r.status_code, city_input));
+      return std::unexpected(
+          std::format("APIエラー: code {}, 地名: {}", r.status_code, city));
     }
   }
 }
 
 int main(int argc, char **argv) {
 
-  #ifdef _WIN32
-    // Windows コンソールで UTF-8 が使用できるように
-    SetConsoleOutputCP(CP_UTF8);
-  #endif
+#ifdef _WIN32
+  // Windows コンソールで UTF-8 が使用できるように
+  SetConsoleOutputCP(CP_UTF8);
+#endif
 
   std::string city_input;
-  std::string city_to_watch;
-  std::vector<std::string> city_list;
   std::vector<std::string> query_args;
   bool auto_detect = false;
   bool show_saved_city_list = false;
@@ -62,30 +60,34 @@ int main(int argc, char **argv) {
 
   app.add_option("-q,--query", query_args, "調べたい地域 [日数学(オプション)]")
       ->expected(1, 2);
-  app.add_option("-w,--watch", city_to_watch, "保存したい地域");
+  app.add_option("-w,--watch", city_input, "保存したい地域");
+  app.add_option("-r,--remove", city_input, "リストから地域を削除");
   app.add_flag("-l,--list", show_saved_city_list, "保存される地域リスト");
 
   CLI11_PARSE(app, argc, argv);
 
-  int active_options =
-      (app.count("-q") > 0) + (app.count("-l") > 0) + (app.count("-w") > 0);
+  int active_options = (app.count("-q") > 0) + (app.count("-l") > 0) +
+                       (app.count("-w") + app.count("-r") > 0);
 
   if (active_options > 1) {
     std::println(stderr,
-                 "エラー: -q, -l, -w "
+                 "エラー: -q, -l, -w , -r"
                  "は同時に使用できません。どれか一つを選んでください。");
     return 1;
   }
 
   if (app.count("-w") > 0) {
     // まず、その都市がエリアマップに存在するかどうかを確認する
-    auto validation = getCityCode(city_to_watch);
+    auto validation = getCityCode(city_input);
     if (!validation) {
       std::println(stderr, "エラー: {}", validation.error());
       return 1;
     }
 
-    std::string city_name_jp = getCityNameJP(city_to_watch, *validation);
+    std::string city_name_jp = getCityNameJP(city_input, *validation);
+
+    Settings temp_s;
+    std::expected<int, std::string> result;
 
     // 重複を避けるために、すでにリストに含まれているかどうかを確認する
     if (st) {
@@ -93,29 +95,87 @@ int main(int argc, char **argv) {
           std::find(st->watchList.begin(), st->watchList.end(), city_name_jp);
       if (it == st->watchList.end()) {
         st->watchList.push_back(city_name_jp);
+        result = saveSettings(st.value());
       } else {
         std::println("'{}' は既にリストに含まれています。", city_name_jp);
         return 0;
       }
+    } else {
+      temp_s.watchList.push_back(city_name_jp);
+      result = saveSettings(temp_s);
     }
 
     // ディスクに保存する
-    if (saveSettings(city_name_jp)) {
+    if (result) {
       std::println("'{}' をリストに保存しました。", city_name_jp);
+      return *result; // *result -> 0 ,保存して終了
     } else {
-      std::println(stderr, "エラー: 設定の保存に失敗しました。");
+      std::println(stderr, "エラー: 設定の保存に失敗しました。{}",
+                   result.error());
+      return 1;
+    }
+  }
+
+  if (app.count("-r") > 0) {
+    // まず、リストの有無を確認する
+    if (st) {
+      auto validation = getCityCode(city_input);
+      if (!validation) {
+        std::println(stderr, "エラー: {}", validation.error());
+        return 1;
+      }
+
+      std::string city_name_jp = getCityNameJP(city_input, *validation);
+      auto it =
+          std::find(st->watchList.begin(), st->watchList.end(), city_name_jp);
+      if (it != st->watchList.end()) {
+        // 削除動作
+        std::erase(st->watchList, city_name_jp);
+      } else {
+        std::println(
+            "'{}' はリストにありません。'-l' オプションで確認してください。",
+            city_name_jp);
+        return 0;
+      }
+    } else {
+      std::println(
+          stderr,
+          "'{}' はリストにありません。'-l' オプションで確認してください。",
+          city_input);
       return 1;
     }
 
-    // 保存して終了
-    return 0;
+    auto result = saveSettings(st.value());
+    // ディスクに保存する
+    if (result) {
+      std::println("'{}' をリストから削除しました。", city_input);
+      return *result; // *result -> 0 ,保存して終了
+    } else {
+      std::println(stderr, "エラー: 設定の保存に失敗しました。{}",
+                   result.error());
+      return 1;
+    }
   }
 
   // ユーザーの入力がなかったらIPアドレス自動検知になること。
   if (app.count_all() == 1 && !show_saved_city_list) {
+    // stやcity_listがnullの場合動きません
     if (st && !st->watchList.empty()) {
-      city_list = st->watchList;
       std::println("保存された地域の天気を表示します...");
+
+      // 保存された地域があったら、１つずつ出力する
+      for (auto const &city : st->watchList) {
+        auto resp = queryWeather(city);
+        if (!resp) {
+          std::println("{}", resp.error());
+          return 1;
+        }
+
+        // 今日だけの天気を出力する
+        days_to_show = 1;
+
+        display(*resp, days_to_show);
+      }
     } else {
       auto_detect = true;
     }
@@ -164,7 +224,7 @@ int main(int argc, char **argv) {
     if (loc.success) {
       if (loc.country != "Japan") {
         std::println(stderr,
-                     "本ツールは日本の地名しか使えません. 自動判明した国は {}.",
+                     "本ツールは日本の地名しか使えません。 自動判明した国は {}。",
                      loc.country);
         return 1;
       }
@@ -173,31 +233,17 @@ int main(int argc, char **argv) {
 
       auto resp = queryWeather(city_input);
       if (!resp) {
-        std::println("すみません... {} は天気APIに対応していないです。", city_input);
+        std::println("すみません... {} は天気APIに対応していないです。",
+                     city_input);
         return 1;
       }
 
       display(*resp, days_to_show);
     } else {
-      std::println(stderr, "自動地域検索失敗しました. "
-                           "インターネットの繋がりをチェックしてください.");
+      std::println(stderr, "自動地域検索失敗しました。 "
+                           "インターネットの繋がりをチェックしてください。");
       return 1;
     }
-  }
-
-  // 保存された地域が存在したら、１つずつ出力する
-  // stやcity_listがnullの場合動きません
-  for (auto const &city : city_list) {
-    auto resp = queryWeather(city);
-    if (!resp) {
-      std::println("{}", resp.error());
-      return 1;
-    }
-
-    // 今日だけの天気を出力する
-    days_to_show = 1;
-
-    display(*resp, days_to_show);
   }
 
   return 0;

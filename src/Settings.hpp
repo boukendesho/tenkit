@@ -1,5 +1,7 @@
 #pragma once
+#include <expected>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -24,41 +26,31 @@ inline std::filesystem::path settingsPath() {
 }
 
 inline std::optional<Settings> loadSettings() {
-  Settings settings;
+  Settings s;
   nlohmann::json settings_data;
   std::filesystem::path path = settingsPath();
 
   if (!std::filesystem::exists(path)) {
     // std::println(stderr, "Setting file not found.");
     return std::nullopt;
-  } else {
-    std::ifstream in(path);
-
-    try {
-      settings_data = nlohmann::json::parse(in);
-    } catch (const nlohmann::json::parse_error &e) {
-      std::println(stderr, "JSONパースエラー: {}", e.what());
-      return std::nullopt;
-    }
-
-    settings.watchList = settings_data["watchList"];
-
-    return settings;
   }
+  std::ifstream in(path);
+
+  try {
+    settings_data = nlohmann::json::parse(in);
+  } catch (const nlohmann::json::parse_error &e) {
+    std::println(stderr, "JSONパースエラー: {}", e.what());
+    return std::nullopt;
+  }
+
+  s.watchList = settings_data["watchList"];
+
+  return s;
 }
 
-inline bool saveSettings(const std::string &city) {
-  const auto nullable_s = loadSettings();
-  Settings s;
-  if (nullable_s) {
-    s = nullable_s.value();
-  }
-
-  s.watchList.push_back(city);
-
+inline std::expected<int, std::string> saveSettings(const Settings &s) {
   std::filesystem::path path = settingsPath();
   std::filesystem::path dir = settingsPath().parent_path();
-
   std::filesystem::create_directories(dir);
 
   std::ofstream out(path);
@@ -67,13 +59,13 @@ inline bool saveSettings(const std::string &city) {
 
     std::error_code ec(err, std::generic_category());
 
-    std::println(stderr, "{} を開けませんでした. 理由: {} (コード: {})",
-               path.string(), ec.message(), err);
-    return false;
-  } else {
-    nlohmann::json settings_in_json = s;
-    std::string settings_in_string = settings_in_json.dump(4);
-    std::print(out, "{}", settings_in_string);
-    return true;
+    return std::unexpected(
+        std::format("{} を開けませんでした. 理由: {} (コード: {})",
+                    path.string(), ec.message(), err));
   }
+
+  nlohmann::json settings_in_json = s;
+  std::print(out, "{}", settings_in_json.dump(4));
+
+  return 0;
 }

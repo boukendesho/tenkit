@@ -175,17 +175,12 @@ getCityCode(const std::string &input) {
 inline std::string getCityNameJP(const std::string &input, const std::string &code) {
   if (isJapanese(input)) {
     return input;
-  } else {
-    // auto code_res = getCityCode(input);
+  } 
 
-    // const std::string& code = *code_res;
-
-    for (const auto& [name, c] : city_code_by_jp) {
-        if (c == code) {
-            return name;
-        } else {
-          throw std::runtime_error("変なことが発生してしまいました...");
-        }
-    }
+  for (const auto& [name, c] : city_code_by_jp) {
+    if (c == code) {
+      return name;
+    } 
   }
+  return input;
 }

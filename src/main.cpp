@@ -7,7 +7,6 @@
 #include "Settings.hpp"
 #include <CLI/CLI.hpp>
 #include <cpr/cpr.h>
-#include <cpr/response.h>
 #include <expected>
 #include <format>
 #include <print>
@@ -39,7 +38,7 @@ queryWeather(const std::string &city_input) {
 int main(int argc, char **argv) {
 
   #ifdef _WIN32
-    // コンソールで UTF-8 を使用するように
+    // Windows コンソールで UTF-8 が使用できるように
     SetConsoleOutputCP(CP_UTF8);
   #endif
 

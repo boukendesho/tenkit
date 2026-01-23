@@ -4,9 +4,14 @@ name: CMake on multiple platforms
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    tags: ["v*"]
+    paths-ignore:
+      - ".github/**"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore:
+      - ".github/**"
 
 jobs:
   build:
@@ -40,60 +45,86 @@ jobs:
             cpp_compiler: cl
 
     steps:
-    - name: Install Latest Compilers (Linux)
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        if [[ "${{ matrix.cpp_compiler }}" == "clang++-20" ]]; then
-          sudo apt-get install -y g++-14 clang-20
-        fi
+      - name: Install Latest Compilers (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          if [[ "${{ matrix.cpp_compiler }}" == "clang++-20" ]]; then
+            sudo apt-get install -y g++-14 clang-20
+          fi
 
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup vcpkg
-      # This sets the VCPKG_ROOT environment variable which your preset needs
-      uses: lukka/run-vcpkg@v11
-      # with:
-      #   vcpkgGitCommitId: 'latest' # Or a specific commit for reproducibility
+      - name: Setup vcpkg
+        # This sets the VCPKG_ROOT environment variable which your preset needs
+        uses: lukka/run-vcpkg@v11
+        # with:
+        #   vcpkgGitCommitId: 'latest' # Or a specific commit for reproducibility
 
-    - name: Set reusable strings
-      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
-      id: strings
-      shell: bash
-      run: |
+      - name: Set reusable strings
+        # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
+        id: strings
+        shell: bash
+        run: |
           echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
-        -DVCPKG_TARGET_TRIPLET=${{ runner.os == 'Windows' && 'x64-windows-static' || 'x64-linux' }}
-        -S ${{ github.workspace }}
+      - name: Configure CMake
+        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+        run: >
+          cmake -B ${{ steps.strings.outputs.build-output-dir }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+          -DVCPKG_TARGET_TRIPLET=${{ runner.os == 'Windows' && 'x64-windows-static' || 'x64-linux' }}
+          -S ${{ github.workspace }}
 
-    - name: Build
-      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      run: |
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          cmake --build "${{ steps.strings.outputs.build-output-dir }}" --config ${{ matrix.build_type }}
-        else
-          cmake --build ${{ steps.strings.outputs.build-output-dir }}
-        fi
-      shell: bash
+      - name: Build
+        # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+        run: |
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            cmake --build "${{ steps.strings.outputs.build-output-dir }}" --config ${{ matrix.build_type }}
+          else
+            cmake --build ${{ steps.strings.outputs.build-output-dir }}
+          fi
+        shell: bash
 
-    # - name: Test
-    #   working-directory: ${{ steps.strings.outputs.build-output-dir }}
-    #   # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-    #   # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-    #   run: ctest --build-config ${{ matrix.build_type }}
+      # - name: Test
+      #   working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      #   # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      #   # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      #   run: ctest --build-config ${{ matrix.build_type }}
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: tenkit-${{ matrix.os }}-${{ matrix.cpp_compiler }}
-        path: |
-          ${{ steps.strings.outputs.build-output-dir }}/Release/tenkit.exe
-          ${{ steps.strings.outputs.build-output-dir }}/tenkit
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tenkit-${{ matrix.os }}-${{ matrix.cpp_compiler }}
+          path: |
+            ${{ steps.strings.outputs.build-output-dir }}/Release/tenkit.exe
+            ${{ steps.strings.outputs.build-output-dir }}/tenkit
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') # Only runs on tags starting with 'v'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./assets # This downloads all matrix outputs into subfolders
+
+      - name: Display structure of downloaded files
+        run: ls -R ./assets
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # This will grab all binaries from the subfolders
+          files: |
+            ./assets/tenkit-windows-latest-cl/tenkit.exe
+            ./assets/tenkit-ubuntu-latest-clang++-20/tenkit
+          generate_release_notes: true
+          draft: false
+          prerelease: false

@@ -7,28 +7,28 @@
 #include <ranges>
 
 inline void display(const cpr::Response &r, const int &display_type) {
-  auto data = nlohmann::json::parse(r.text).get<WeatherResponse>();
+  const auto data = nlohmann::json::parse(r.text).get<WeatherResponse>();
 
   std::println("{}", data.title);
 
   std::vector<std::string> weather_layout;
 
   // 1と以下 -> 今日  2 -> 今日と明日  2以上は全部出力する。
-  int n = std::clamp(display_type, 1, 3);
+  const int n = std::clamp(display_type, 1, 3);
 
   for (const auto &f : data.forecasts | std::views::take(n)) {
     // 今日分の降水確率や最低・最高気温や天気詳細のうち、過ぎた分（例・12時に
     // API にアクセスしたときの0時～6時の降水確率）は -- または null になる。
     // {display}の天気しか出力しない。
 
-    std::string min_t = f.temperature.min.celsius.value_or("--");
-    std::string max_t = f.temperature.max.celsius.value_or("--");
+    const std::string min_t = f.temperature.min.celsius.value_or("--");
+    const std::string max_t = f.temperature.max.celsius.value_or("--");
 
-    std::string weather_in_detail = f.detail.weather.value_or("情報なし");
-    std::string wind = f.detail.wind.value_or("情報なし");
-    std::string wave = f.detail.wave.value_or("情報なし");
+    const std::string weather_in_detail = f.detail.weather.value_or("情報なし");
+    const std::string wind = f.detail.wind.value_or("情報なし");
+    const std::string wave = f.detail.wave.value_or("情報なし");
 
-    auto icon = getWeatherIcon(f.telop);
+    const auto icon = getWeatherIcon(f.telop);
 
     weather_layout.push_back(std::format("{:^15}", f.dateLabel));
     weather_layout.push_back(icon[0]);

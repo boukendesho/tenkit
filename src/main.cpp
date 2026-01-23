@@ -17,13 +17,13 @@
 std::expected<cpr::Response, std::string>
 queryWeather(const std::string &city) {
 
-  auto result = getCityCode(city);
+  const auto result = getCityCode(city);
 
   if (!result) {
     return std::unexpected(std::format("エラー: {}", result.error()));
   } else {
-    std::string cityCode = *result;
-    cpr::Response r = cpr::Get(cpr::Url{
+    const std::string cityCode = *result;
+    const cpr::Response r = cpr::Get(cpr::Url{
         "https://weather.tsukumijima.net/api/forecast/city/" + cityCode});
 
     if (r.status_code == 200) {
@@ -78,22 +78,20 @@ int main(int argc, char **argv) {
 
   if (app.count("-w") > 0) {
     // まず、その都市がエリアマップに存在するかどうかを確認する
-    auto validation = getCityCode(city_input);
+    const auto validation = getCityCode(city_input);
     if (!validation) {
       std::println(stderr, "エラー: {}", validation.error());
       return 1;
     }
 
-    std::string city_name_jp = getCityNameJP(city_input, *validation);
+    const std::string city_name_jp = getCityNameJP(city_input, *validation);
 
     Settings temp_s;
     std::expected<int, std::string> result;
 
     // 重複を避けるために、すでにリストに含まれているかどうかを確認する
-    if (st) {
-      auto it =
-          std::find(st->watchList.begin(), st->watchList.end(), city_name_jp);
-      if (it == st->watchList.end()) {
+    if (!st->watchList.empty()) {
+      if (!st->watchList.contains(city_name_jp)) {
         st->watchList.insert(city_name_jp);
         result = saveSettings(st.value());
       } else {
@@ -118,17 +116,16 @@ int main(int argc, char **argv) {
 
   if (app.count("-r") > 0) {
     // まず、リストの有無を確認する
-    if (st) {
-      auto validation = getCityCode(city_input);
+    if (!st->watchList.empty()) {
+      const auto validation = getCityCode(city_input);
       if (!validation) {
         std::println(stderr, "エラー: {}", validation.error());
         return 1;
       }
 
-      std::string city_name_jp = getCityNameJP(city_input, *validation);
-      auto it =
-          std::find(st->watchList.begin(), st->watchList.end(), city_name_jp);
-      if (it != st->watchList.end()) {
+      const std::string city_name_jp = getCityNameJP(city_input, *validation);
+
+      if (st->watchList.contains(city_name_jp)) {
         // 削除動作
         st->watchList.erase(city_name_jp);
       } else {
@@ -145,7 +142,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    auto result = saveSettings(st.value());
+    const auto result = saveSettings(st.value());
     // ディスクに保存する
     if (result) {
       std::println("'{}' をリストから削除しました。", city_input);
@@ -165,7 +162,7 @@ int main(int argc, char **argv) {
 
       // 保存された地域があったら、１つずつ出力する
       for (auto const &city : st->watchList) {
-        auto resp = queryWeather(city);
+        const auto resp = queryWeather(city);
         if (!resp) {
           std::println("{}", resp.error());
           return 1;
@@ -192,7 +189,7 @@ int main(int argc, char **argv) {
         return 1;
       }
     }
-    auto resp = queryWeather(city_input);
+    const auto resp = queryWeather(city_input);
     if (!resp) {
       std::println("{}", resp.error());
       return 1;
@@ -219,19 +216,20 @@ int main(int argc, char **argv) {
     std::print("自動地域検索中...");
 
     // IPアドレスから自動判明する機能
-    GeoLocation loc = detectLocation();
+    const GeoLocation loc = detectLocation();
 
     if (loc.success) {
       if (loc.country != "Japan") {
-        std::println(stderr,
-                     "本ツールは日本の地名しか使えません。 自動判明した国は {}。",
-                     loc.country);
+        std::println(
+            stderr,
+            "本ツールは日本の地名しか使えません。 自動判明した国は {}。",
+            loc.country);
         return 1;
       }
       std::println("判明した地域: {}", loc.city);
       city_input = loc.city;
 
-      auto resp = queryWeather(city_input);
+      const auto resp = queryWeather(city_input);
       if (!resp) {
         std::println("すみません... {} は天気APIに対応していないです。",
                      city_input);

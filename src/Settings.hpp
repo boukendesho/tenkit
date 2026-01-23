@@ -28,7 +28,7 @@ inline std::filesystem::path settingsPath() {
 inline std::optional<Settings> loadSettings() {
   Settings s;
   nlohmann::json settings_data;
-  std::filesystem::path path = settingsPath();
+  const auto path = settingsPath();
 
   if (!std::filesystem::exists(path)) {
     // std::println(stderr, "Setting file not found.");
@@ -49,8 +49,8 @@ inline std::optional<Settings> loadSettings() {
 }
 
 inline std::expected<int, std::string> saveSettings(const Settings &s) {
-  std::filesystem::path path = settingsPath();
-  std::filesystem::path dir = settingsPath().parent_path();
+  const auto path = settingsPath();
+  const auto dir = settingsPath().parent_path();
   std::filesystem::create_directories(dir);
 
   std::ofstream out(path);
@@ -64,7 +64,7 @@ inline std::expected<int, std::string> saveSettings(const Settings &s) {
                     path.string(), ec.message(), err));
   }
 
-  nlohmann::json settings_in_json = s;
+  const nlohmann::json settings_in_json = s;
   std::print(out, "{}", settings_in_json.dump(4));
 
   return 0;

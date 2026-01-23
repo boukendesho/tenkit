@@ -94,14 +94,14 @@ int main(int argc, char **argv) {
       auto it =
           std::find(st->watchList.begin(), st->watchList.end(), city_name_jp);
       if (it == st->watchList.end()) {
-        st->watchList.push_back(city_name_jp);
+        st->watchList.insert(city_name_jp);
         result = saveSettings(st.value());
       } else {
         std::println("'{}' は既にリストに含まれています。", city_name_jp);
         return 0;
       }
     } else {
-      temp_s.watchList.push_back(city_name_jp);
+      temp_s.watchList.insert(city_name_jp);
       result = saveSettings(temp_s);
     }
 
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
           std::find(st->watchList.begin(), st->watchList.end(), city_name_jp);
       if (it != st->watchList.end()) {
         // 削除動作
-        std::erase(st->watchList, city_name_jp);
+        st->watchList.erase(city_name_jp);
       } else {
         std::println(
             "'{}' はリストにありません。'-l' オプションで確認してください。",

@@ -6,11 +6,11 @@
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <print>
+#include <set>
 #include <string>
-#include <vector>
 
 struct Settings {
-  std::vector<std::string> watchList;
+  std::set<std::string> watchList;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings, watchList)

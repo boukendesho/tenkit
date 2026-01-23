@@ -123,7 +123,7 @@ jobs:
         with:
           # This will grab all binaries from the subfolders
           files: |
-            ./assets/tenkit-windows-latest-cl/tenkit.exe
+            ./assets/tenkit-windows-latest-cl/Release/tenkit.exe
             ./assets/tenkit-ubuntu-latest-clang++-20/tenkit
           generate_release_notes: true
           draft: false
